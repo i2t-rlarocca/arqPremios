@@ -1,0 +1,47 @@
+Migración vuelco de pagos de premios de otras jurisdicciones
+
+Objeto de la funcionalidad
+- Son premios de Quini 6 y Brinco pagados en otras jurisdicciones, cuyos pagos deben incorporarse al sistema comercial.
+
+Front End:
+- Muestra los datos del usuario y jurisdiccion del usuario logueado, con una opción "No son tus datos? Haz click aquí para cerrar sesión y volver a ingresar."
+- Muestra la secuencia esperada para el archivo a volcar de esa jurisdicción.
+- Solicita el archivo a procesar para la secuencia esperada.
+- Muestra 3 opciones:
+   1. Procesar: realiza el procesamiento del archivo.
+   2. Nueva Carga: reinicia la pantalla (como volver a hacer click en la opción de menú que lleva a la misma).
+   3. Cerrar: vuelve al menú ppal.
+- Muestra los datos del último vuelco de esa jurisdicción, estado de finalización y posibilidad de descargar un archivo con los errores del procesamiento (si los hubo).
+- Si en algún punto de la interacción o proceso se produce una excepción o falla alguna regla de negocio, se visualiza un panel de error.
+- Cuando el proceso finaliza satisfactoriamente, y no hay premios inválidos, se visualiza un panel de "ok".
+- Cuando el proceso finaliza satisfactoriamente, pero hay premios inválidos, se visualiza un panel de "warning".
+
+Reglas de negocio
+- El paquete zip y sus archivos miembro deben respetar la nomenclatura indicada en el diseño de archivo.
+- El código de jurisdicción que viene en el nombre del paquete y los archivos miembro debe coincidir con la jurisdicción del usuario logueado, si éste es de tipo "provincia", si es de tipo "boldt" o "cas", no aplica.
+- El código de secuencia que viene en el nombre del paquete y los archivos miembro debe coincidir con la secuencia esperada para esa jurisdicción.
+
+Procesamiento 
+- Se hace una carga masiva de los archivos miembro a tablas "rec" de mysql (bd suitecrm_cas).
+- Se validan los datos cargados. Validaciones:
+    1. Validación de la secuencia: SP CC_Premios_Pagados_OP_Validacion, opcion "SEC".
+	2. Validación del envío: SP CC_Premios_Pagados_OP_Validacion, opcion "ENV".
+	3. Validación de registros: SP CC_Premios_Pagados_OP_Validacion, opcion "REG".
+- Si las validaciones 1. y 2. resultaron ok, se realizan los siguientes procesos:
+	1. Se procesan los registros sin error de validación 3: SP CC_Premios_Pagados_OP_Proceso, opción "IN".
+	2. Se genera el archivo de registros con error de validación 3: SP CC_Premios_Pagados_OP_Proceso, opción "OUT".
+	3. Se actualiza la última secuencia procesada:  SP CC_Premios_Pagados_OP_Proceso, opción "UPD".
+	
+Detalles adicionales
+- La secuencia esperada para cada jurisdicción se obtiene con la función mysql obtiene_sgte_secuencia_prepag_op(jurisdiccion) .
+- La auditoría de la funcionalidad se realiza según el protocolo general de la auditoría:
+	* El id_proceso_auditoria se obtiene con la función mysql getNuevoProcesoAuditoria().
+	* Cada evento que se inserta en la auditoria se realiza con el SP de mysql sor_inserta_auditoria con estos parámetros:
+		- id_proceso_auditoria.
+		- idJuego: 999
+		- sorteo: cod_pcia + nro_secuencia (tal como viene en el nombre de paquete)
+		- evento: cod_evento según tablas sor_aud_evento y sor_aud_etapas.
+		- usuario: id del usuario logueado.
+		- ideventoPrev: cod_evento anterior en la secuencia de eventos según tabla sor_aud_evento.
+		- ideventoPost: cod_evento posterior que correspondería en la secuencia de eventos según tabla sor_aud_evento.
+		- detalle: texto detallando el resultado del evento. Ej. "Inicio valicación de la secuencia.", "Fin valicación de la secuencia con error."

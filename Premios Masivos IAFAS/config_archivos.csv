@@ -1,0 +1,3 @@
+9	R	OP	[0-9]{10}+\\.+ZIP+$/i	2	.+ZIP+$/i	S		s	R
+9	R	OP	[0-9]{10}+\\.+CNA+$/i	1	.+CNA+$/i	N	a5ecf996-0344-11e7-aef6-d050990fe001	n	R
+9	R	OP	[0-9]{10}+\\.+CTR+$/i	1	.+CTR+$/i	N	a5ecf996-0344-11e7-aef6-d050990fe001	n	R

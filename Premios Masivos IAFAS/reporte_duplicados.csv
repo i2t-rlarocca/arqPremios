@@ -1,0 +1,2 @@
+﻿cp_cpos;cp_scpo;cp_name;id;name_sin_cp;id_cas;escenario;sql
+2826;4;ALDEA SAN JUAN (2826-4);2826-4;ALDEA SAN JUAN;2826-4;1;UPDATE tbl_cp_diferentes SET tbl_localidades_id_c = '2826-4' WHERE loc_cpos = '2826' AND loc_scpo = '4';
